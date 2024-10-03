@@ -4,14 +4,12 @@
 ---
 
 ## Descrição Geral
-
     Este projeto implementa um sistema de controle de semáforos para quatro cruzamentos (A, B, C, D)
     utilizando o sistema operacional em tempo real FreeRTOS. O sistema simula o fluxo de veículos
     através desses cruzamentos, controlando os semáforos para garantir um tráfego seguro e eficiente.
     Cada cruzamento possui quatro semáforos que controlam as direções norte-sul e leste-oeste.
 
 ## Funcionalidades
-
     Múltiplas Tasks: O projeto cria tasks separadas para cada cruzamento e para os veículos. Essas
     tasks são responsáveis por controlar o estado dos semáforos e simular o movimento dos carros.
     
@@ -28,7 +26,6 @@
     altera esses estados com base nas condições atuais de tráfego e nas posições dos veículos.
 
 ## Arquitetura do Sistema
-
     Tasks: Cada cruzamento possui uma task dedicada que controla os semáforos. Uma task adicional é 
     responsável por simular o movimento dos veículos pelos cruzamentos.
     
@@ -44,7 +41,6 @@
     ambiente real de tráfego.
 
 ## Estrutura do Código
-
     main.c: Arquivo principal onde estão implementadas as tasks e a lógica do sistema de controle de tráfego.
     
     semáforos: Semáforos são utilizados para sincronizar o tráfego.
@@ -55,11 +51,9 @@
     ![Imagem indisponível](Fluxograma.svg)
 
 ## Demonstração
-
-    Link de acesso ao vídeo no YouTube: https://youtu.be/XLX-k2XmsSQ
+    Link de acesso ao vídeo no YouTube: 
 
 ## Desenvolvedores
-
     Matheus Lucas   (matheuslucas.farias@ee.ufcg.edu.br)
     Tâmara Ruth     (tamara.santos@ee.ufcg.edu.br)
     Tulio Tavares   (tulio.tavares@ee.ufcg.edu.br)
