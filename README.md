@@ -36,9 +36,9 @@
     Semáforos (FreeRTOS): São utilizados semáforos para coordenar o tráfego e evitar colisões. Eles garantem
     que apenas um veículo por vez possa atravessar um cruzamento, respeitando os ciclos dos semáforos.
     
-    Simulação de Tráfego: Veículos são gerados em intervalos de tempo aleatórios, com trajetórias pré-determinadas
-    pelos cruzamentos. A velocidade dos veículos e a sua rota variam conforme os cruzamentos, simulando um 
-    ambiente real de tráfego.
+    Simulação de Tráfego: Veículos são gerados em intervalos de tempo aleatórios, com trajetórias
+    pré-determinadas pelos cruzamentos. A velocidade dos veículos e a sua rota variam conforme os cruzamentos,
+    simulando um ambiente real de tráfego.
 
 ## Estrutura do Código
     main.c: Arquivo principal onde estão implementadas as tasks e a lógica do sistema de controle de tráfego.
