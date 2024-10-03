@@ -141,6 +141,11 @@ static BaseType_t xTraceRunning = pdTRUE;
 
 SemaphoreHandle_t xNS_Straight, xEW_Straight, xNS_Left, xEW_Left;
 
+int geraAleatorio(int inicial, int final) {
+	srand(time(NULL)); // Seed peseudo aleatória
+	return rand() % (final + 1) + inicial;
+}
+
 void Cruzamento() {
 	xSemaphoreGive(xEW_Straight);
 	xSemaphoreGive(xNS_Left);
@@ -266,8 +271,10 @@ int* definirRota() {
 
 void Carro() {
 	int i = 0, N = 20;
-
+	
 	int direcaoAtual; // 0 = NS,  1= EW, 2 = SN, 3 = WE;
+	int velocidade = 50;
+	int distancia = 500;
 
 	int* rota = definirRota();
 
@@ -276,27 +283,41 @@ void Carro() {
 	{
 		case 0:
 		case 1:
-			direcaoAtual = 0; break;
+			direcaoAtual = 0;  //NS 
+			break;
 		case 2:
 		case 3:
-			direcaoAtual = 1; break;
+			direcaoAtual = 1;  //EW 
+			break;
 		case 4:
 		case 5:
-			direcaoAtual = 2; break;
+			direcaoAtual = 2;  //SN 
+			break;
 		case 6:
 		case 7:
-			direcaoAtual = 3; break;
-		default:
-			direcaoAtual = 0;
+			direcaoAtual = 3;  //WE 
 			break;
+		default:
+			direcaoAtual = 0;  //NS 
+			break;
+
 	}
 
 	while (1) {
 		i++;
+		printf("rota[i] = %d\n", rota[i]);
 		if (rota[i] == -1) { break; }
-		
-		printf("O Carro esta no sentido %d\n", direcaoAtual);
 
+
+		//Define velociade
+		if (direcaoAtual == 0 || direcaoAtual == 1) { //NS ou SN
+			velocidade = 60 + geraAleatorio(0, 10) - 5;
+		}
+		else if (direcaoAtual == 1 || direcaoAtual == 3) { // EW ou WE
+			velocidade = 50 + geraAleatorio(0, 10) - 5;;
+		}
+
+		printf("O Carro esta no sentido %d a %d km/h\n", direcaoAtual, velocidade);
 		//Espera chegar no cruzamento
 		vTaskDelay(pdMS_TO_TICKS(500));
 		printf("Carro chegou no cruzamneto!\n");
@@ -311,8 +332,8 @@ void Carro() {
 				break;
 			case 1://Esquerda
 				printf("O carro quer virar a esquerda\n");
-				xSemaphoreTake(xEW_Left, portMAX_DELAY);
-				xSemaphoreGive(xEW_Left);
+				xSemaphoreTake(xNS_Left, portMAX_DELAY);
+				xSemaphoreGive(xNS_Left);
 				break;
 			case 2://Frente
 				printf("O carro quer seguir em fente\n");
@@ -334,8 +355,8 @@ void Carro() {
 				break;
 			case 1://Esquerda
 				printf("O carro quer virar a esquerda\n");
-				xSemaphoreTake(xNS_Left, portMAX_DELAY);
-				xSemaphoreGive(xNS_Left);
+				xSemaphoreTake(xEW_Left, portMAX_DELAY);
+				xSemaphoreGive(xEW_Left);
 				break;
 			case 2://Frente
 				printf("O carro quer seguir em fente\n");
@@ -351,6 +372,7 @@ void Carro() {
 		else { printf("ERRO!!!!");}
 		
 		printf("O Carro seguiu\n");
+
 		//Muda direção
 		if (rota[i] == 0) {
 			switch (direcaoAtual) {
@@ -402,6 +424,7 @@ void Carro() {
 
 int main(void)
 {
+	
 	/* This demo uses heap_5.c, so start by defining some heap regions.  heap_5
 	is only used for test and example reasons.  Heap_4 is more appropriate.  See
 	http://www.freertos.org/a00111.html for an explanation. */
