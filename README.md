@@ -48,7 +48,7 @@
     tasks: As tasks controlam os semáforos e simulam o fluxo de veículos.
 
 ## Representação Visual dos Cruzamentos
-    ![Imagem indisponível](Cruzamentos.png)
+![Imagem indisponível](Cruzamentos.png)
 
 ## Demonstração
     Link de acesso ao vídeo no YouTube: 
