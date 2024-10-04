@@ -733,7 +733,7 @@ int main(void)
 	int i, j;
 
 	//Comente se não quizer apreciar nosso trabalho
-	//BoasVindas();
+	BoasVindas();
 
 	//Inicializa o mutex dos estados
 	xAcessoEstado = xSemaphoreCreateMutex();
