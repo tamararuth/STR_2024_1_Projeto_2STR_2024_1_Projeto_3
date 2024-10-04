@@ -167,15 +167,15 @@ int FluxoVia[8] = { 0 };
 // Mostra mensagem de boas vindas
 void BoasVindas(void)
 {
-	printf("\n .(_).	              Prezado professor Kyller,	   	      .(_).\n(o\\!/o)   Antes de iniciar, tenha conhecimento da legenda:   (o\\!/o)\n\n");
+	printf("\n .(___).	      Prezado professor Kyller,	   	        .(___).\n(o\\_!_/o)   Antes de iniciar, tenha conhecimento da legenda:   (o\\_!_/o)\n\n");
 
 	printf("\n-------------------------------- LEGENDA --------------------------------\n");
 	printf("|                             [>] Verde                                 |\n");
-	printf("|                             [!] Amarelo                               |\n");
 	printf("|                             [X] Vermelho                              |\n");
+	printf("|                             [!] Amarelo                               |\n");
 	printf("-------------------------------------------------------------------------\n");
 
-	printf("\n\n .(_).	                 STR 2024.1 PROJETO 3	     	      .(_).\n(o\\!/o)           Autores: Matheus, Tamara e Tulio           (o\\!/o)\n\n");
+	printf("\n\n .(___).	          STR 2024.1 PROJETO 3	   	        .(___).\n(o\\_!_/o)           Autores: Matheus, Tamara e Tulio           (o\\_!_/o)\n\n\n");
 	system("pause");
 	system("cls");
 }
@@ -240,7 +240,7 @@ char mostraEstado(int estado) {
 // Mostrar o Cruzamento em string
 char mostraCruzamento(int cruzamento) {
 	char cruzamentoChar;
-	switch (cruzamento){
+	switch (cruzamento) {
 	case 0:
 		cruzamentoChar = 'A';
 		break;
@@ -260,7 +260,6 @@ char mostraCruzamento(int cruzamento) {
 
 	return cruzamentoChar;
 }
-
 
 /*---------------------- Funções Auxiliares ----------------------*/
 // Gerar número aleatório com base em variáveis iniciais e finais
@@ -338,8 +337,6 @@ int* definirRota() {
 
 	return direcoes;
 }
-
-
 /*---------------------- As Tasks começam aqui ----------------------*/
 
 // Exibir os estados de todos os semáforos 
@@ -403,7 +400,6 @@ void Cruzamento(void* pvParameters) {
 
 		vTaskDelay(pdMS_TO_TICKS(T));
 
-
 		/*------------------------------------ FASE 2 ------------------------------------*/
 
 		// Pedindo acessando para mudar os estados
@@ -416,8 +412,7 @@ void Cruzamento(void* pvParameters) {
 		// Liberando os estados após acessar e alterar o estado
 		xSemaphoreGive(xAcessoEstado);
 
-		vTaskDelay(pdMS_TO_TICKS(T)); 
-
+		vTaskDelay(pdMS_TO_TICKS(T));
 
 		/*------------------------------------ FASE 3 ------------------------------------*/
 
@@ -436,7 +431,6 @@ void Cruzamento(void* pvParameters) {
 		xSemaphoreGive(xAcessoEstado);
 
 		vTaskDelay(pdMS_TO_TICKS(T));
-
 
 		/*------------------------------------ FASE 4 ------------------------------------*/
 
@@ -508,7 +502,6 @@ void Carro(void* pvParameters) {
 		sentidoAtual = 0;    // NS
 		cruzamentoAtual = 0; // A
 		break;
-
 	}
 
 	printf("O carro %d surgiu na posicao %d\n", id, rota[0]);
@@ -736,12 +729,11 @@ int main(void)
 	/* Initialise the trace recorder.  Use of the trace recorder is optional.
 	See http://www.FreeRTOS.org/trace for more information. */
 	vTraceEnable(TRC_START);
-	
 
 	int i, j;
 
 	//Comente se não quizer apreciar nosso trabalho
-	BoasVindas();
+	//BoasVindas();
 
 	//Inicializa o mutex dos estados
 	xAcessoEstado = xSemaphoreCreateMutex();
@@ -763,14 +755,14 @@ int main(void)
 	//Crias os Handles das tasks
 	xTaskHandle Cruz_A, Cruz_B, Cruz_C, Cruz_D;
 	xTaskHandle MonGeral, CriaCar;
-	
+
 	// Cria as Tasks
 	xTaskCreate(MonitoramentoGeral, (signed char*)"Monitoramento_Geral", configMINIMAL_STACK_SIZE, (void*)NULL, 4, &MonGeral);
-	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_A",        configMINIMAL_STACK_SIZE, (void*)0,    5, &Cruz_A  );
-	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_B",        configMINIMAL_STACK_SIZE, (void*)1,    5, &Cruz_B  );
-	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_C",		 configMINIMAL_STACK_SIZE, (void*)2,    5, &Cruz_C  );
-	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_D",        configMINIMAL_STACK_SIZE, (void*)3,    5, &Cruz_D  );
-	xTaskCreate(criarCarros,        (signed char*)"Criar_Carros",        configMINIMAL_STACK_SIZE, (void*)NULL, 1, &CriaCar );
+	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_A", configMINIMAL_STACK_SIZE, (void*)0, 5, &Cruz_A);
+	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_B", configMINIMAL_STACK_SIZE, (void*)1, 5, &Cruz_B);
+	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_C", configMINIMAL_STACK_SIZE, (void*)2, 5, &Cruz_C);
+	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_D", configMINIMAL_STACK_SIZE, (void*)3, 5, &Cruz_D);
+	xTaskCreate(criarCarros, (signed char*)"Criar_Carros", configMINIMAL_STACK_SIZE, (void*)NULL, 1, &CriaCar);
 
 	vTaskStartScheduler();
 	for (;;);
