@@ -133,16 +133,19 @@ StackType_t uxTimerTaskStack[configTIMER_TASK_STACK_DEPTH];
 static BaseType_t xTraceRunning = pdTRUE;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-#define T 15000 //Tempo total de um ciclo semafórico [ms]
+/*                                                              PROJETO 3 COMEÇA AQUI !!!!                                                                             */
+/*---------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 #include <time.h>
 #include "semphr.h"
 
+//Pode mexer
+#define T 15000             //Tempo de uma fase semafórica
+#define CHEGADA_MIN 4000    // Tempo Mínimo de chaga dos carros no circuito
+#define CHEGADA_MAX 8000    // Tempo Máximo de chaga dos carros no circuito
 
-
-SemaphoreHandle_t xAcessoEstado; // Mutex para acessar os estados dos semáforos
-SemaphoreHandle_t xAcessoCruz[4]; // Mutex para acessar os estados do cruzamento a esquerda A-0, B-1, C-2 e D-3
+SemaphoreHandle_t xAcessoEstado;  // Mutex para acessar os estados dos semáforos
+SemaphoreHandle_t xAcessoCruz[4]; // Mutexes para acessar os estados do cruzamento A-0, B-1, C-2 e D-3
 
 int xEstadoSemaforos[4][4] = { {0} }; // 0 vermelho, 1 verde, 2 amarelo
 
@@ -157,9 +160,11 @@ SemaphoreHandle_t xSemaforos[4][4]; // Não mexer, pois é o que os carros irão pe
 
 */
 
-int OcupacaodaVia[8] = { 0 };
+//Mede o quantidade de carros por vias
+int FluxoVia[8] = { 0 };
 
-/*---------------------- Funções Auxiliares ----------------------*/
+/*---------------------- Funções Estéticas ----------------------*/
+// Mostra mensagem de boas vindas
 void BoasVindas(void)
 {
 	printf("\n .(_).	              Prezado professor Kyller,	   	      .(_).\n(o\\!/o)   Antes de iniciar, tenha conhecimento da legenda:   (o\\!/o)\n\n");
@@ -175,13 +180,7 @@ void BoasVindas(void)
 	system("cls");
 }
 
-// Gerar número aleatório com base em variáveis iniciais e finais
-int geraAleatorio(int inicial, int final) {
-	srand(time(NULL)); // Seed peseudo aleatória
-	return rand() % (final + 1) + inicial;
-}
-
-// Mostrar a posição do carro em string, por isso o uso do ponteiro
+// Mostrar a Direção do carro em string
 char* mostraDirecao(int sentido) {
 	static char direcaoString[3]; // Variável estática pois permanece após o fim da função
 
@@ -216,6 +215,7 @@ char* mostraDirecao(int sentido) {
 	return direcaoString;
 }
 
+// Mostrar o Estado dos semáforos em string
 char mostraEstado(int estado) {
 	char estadoChar;
 
@@ -235,6 +235,38 @@ char mostraEstado(int estado) {
 	}
 
 	return estadoChar;
+}
+
+// Mostrar o Cruzamento em string
+char mostraCruzamento(int cruzamento) {
+	char cruzamentoChar;
+	switch (cruzamento){
+	case 0:
+		cruzamentoChar = 'A';
+		break;
+	case 1:
+		cruzamentoChar = 'B';
+		break;
+	case 2:
+		cruzamentoChar = 'C';
+		break;
+	case 3:
+		cruzamentoChar = 'D';
+		break;
+	default:
+		cruzamentoChar = 'E';
+		break;
+	}
+
+	return cruzamentoChar;
+}
+
+
+/*---------------------- Funções Auxiliares ----------------------*/
+// Gerar número aleatório com base em variáveis iniciais e finais
+int geraAleatorio(int inicial, int final) {
+	srand(time(NULL)); // Seed peseudo aleatória
+	return rand() % (final + 1) + inicial;
 }
 
 // Definir a rota com base em um ponto inicial aleatório de surgimento do carro
@@ -307,9 +339,34 @@ int* definirRota() {
 	return direcoes;
 }
 
+
 /*---------------------- As Tasks começam aqui ----------------------*/
 
-// Controlar os cruzamentos que tem no projeto (A, B, C e D)
+// Exibir os estados de todos os semáforos 
+void MonitoramentoGeral() {
+	while (1) {
+		// Acessando os estados
+		xSemaphoreTake(xAcessoEstado, portMAX_DELAY);
+
+		printf("\n ---- CRUZAMENTO A --------- CRUZAMENTO B --------- CRUZAMENTO C --------- CRUZAMENTO D ------\n");
+		printf(" NS-frente_direita [%c] | NS-frente_direita [%c] | NS-frente_direita [%c] | NS-frente_direita [%c]\n", mostraEstado(xEstadoSemaforos[0][0]), mostraEstado(xEstadoSemaforos[1][0]), mostraEstado(xEstadoSemaforos[2][0]), mostraEstado(xEstadoSemaforos[3][0]));
+		printf(" EW-frente_direita [%c] | EW-frente_direita [%c] | EW-frente_direita [%c] | EW-frente_direita [%c]\n", mostraEstado(xEstadoSemaforos[0][1]), mostraEstado(xEstadoSemaforos[1][1]), mostraEstado(xEstadoSemaforos[2][1]), mostraEstado(xEstadoSemaforos[3][1]));
+		printf(" NS-esquerda       [%c] | NS-esquerda       [%c] | NS-esquerda       [%c] | NS-esquerda       [%c]\n", mostraEstado(xEstadoSemaforos[0][2]), mostraEstado(xEstadoSemaforos[1][2]), mostraEstado(xEstadoSemaforos[2][2]), mostraEstado(xEstadoSemaforos[3][2]));
+		printf(" EW-esquerda       [%c] | EW-esquerda       [%c] | EW-esquerda       [%c] | EW-esquerda       [%c]\n", mostraEstado(xEstadoSemaforos[0][3]), mostraEstado(xEstadoSemaforos[1][3]), mostraEstado(xEstadoSemaforos[2][3]), mostraEstado(xEstadoSemaforos[3][3]));
+		printf("-----------------------|-----------------------|-----------------------|----------------------\n");
+		printf("   Via AB ||  Via BA   |   Via BD ||  Via DB   |   Via CA ||  Via AC   |   Via DC ||  Via CD   \n");
+		printf("    [%d]   ||   [%d]     |    [%d]   ||   [%d]     |     [%d]  ||   [%d]     |     [%d]  ||   [%d]     \n", FluxoVia[4], FluxoVia[0], FluxoVia[5], FluxoVia[1], FluxoVia[7], FluxoVia[3], FluxoVia[6], FluxoVia[2]);
+		printf("----------------------------------------------------------------------------------------------\n\n");
+
+		// Liberando os estados
+		xSemaphoreGive(xAcessoEstado);
+
+		vTaskDelay(pdMS_TO_TICKS(T));
+		//clear_terminal();
+	}
+}
+
+// Controlar os cruzamentos (A, B, C e D)
 void Cruzamento(void* pvParameters) {
 
 	//ID do cruzamento
@@ -359,7 +416,7 @@ void Cruzamento(void* pvParameters) {
 		// Liberando os estados após acessar e alterar o estado
 		xSemaphoreGive(xAcessoEstado);
 
-		vTaskDelay(pdMS_TO_TICKS(T/2)); 
+		vTaskDelay(pdMS_TO_TICKS(T)); 
 
 
 		/*------------------------------------ FASE 3 ------------------------------------*/
@@ -393,35 +450,11 @@ void Cruzamento(void* pvParameters) {
 		// Liberando os estados após acessar e alterar o estado
 		xSemaphoreGive(xAcessoEstado);
 
-		vTaskDelay(pdMS_TO_TICKS(T/2));
-	}
-}
-
-
-// Exibir os estados de todos os semáforos do projeto 
-void ComandoGeral() {
-	while (1) {
-		// Acessando os estados
-		xSemaphoreTake(xAcessoEstado, portMAX_DELAY);
-
-		printf("\n ---- CRUZAMENTO A --------- CRUZAMENTO B --------- CRUZAMENTO C --------- CRUZAMENTO D ------\n");
-		printf(" NS-frente_direita [%c] | NS-frente_direita [%c] | NS-frente_direita [%c] | NS-frente_direita [%c]\n", mostraEstado(xEstadoSemaforos[0][0]), mostraEstado(xEstadoSemaforos[1][0]), mostraEstado(xEstadoSemaforos[2][0]), mostraEstado(xEstadoSemaforos[3][0]));
-		printf(" EW-frente_direita [%c] | EW-frente_direita [%c] | EW-frente_direita [%c] | EW-frente_direita [%c]\n", mostraEstado(xEstadoSemaforos[0][1]), mostraEstado(xEstadoSemaforos[1][1]), mostraEstado(xEstadoSemaforos[2][1]), mostraEstado(xEstadoSemaforos[3][1]));
-		printf(" NS-esquerda       [%c] | NS-esquerda       [%c] | NS-esquerda       [%c] | NS-esquerda       [%c]\n", mostraEstado(xEstadoSemaforos[0][2]), mostraEstado(xEstadoSemaforos[1][2]), mostraEstado(xEstadoSemaforos[2][2]), mostraEstado(xEstadoSemaforos[3][2]));
-		printf(" EW-esquerda       [%c] | EW-esquerda       [%c] | EW-esquerda       [%c] | EW-esquerda       [%c]\n", mostraEstado(xEstadoSemaforos[0][3]), mostraEstado(xEstadoSemaforos[1][3]), mostraEstado(xEstadoSemaforos[2][3]), mostraEstado(xEstadoSemaforos[3][3]));
-		printf("-----------------------|-----------------------|-----------------------|----------------------\n");
-		printf("   Via AB ||  Via BA   |   Via BD ||  Via DB   |   Via CA ||  Via AC   |   Via DC ||  Via CD   \n");
-		printf("    [%d]   ||   [%d]     |    [%d]   ||   [%d]     |     [%d]  ||   [%d]     |     [%d]  ||   [%d]     \n", OcupacaodaVia[4], OcupacaodaVia[0], OcupacaodaVia[5], OcupacaodaVia[1], OcupacaodaVia[7], OcupacaodaVia[3], OcupacaodaVia[6], OcupacaodaVia[2]);
-		printf("----------------------------------------------------------------------------------------------\n\n");
-
-		// Liberando os estados
-		xSemaphoreGive(xAcessoEstado);
-
 		vTaskDelay(pdMS_TO_TICKS(T));
-		//clear_terminal();
 	}
 }
 
+// Controla os carros
 void Carro(void* pvParameters) {
 
 	//ID do cruzamento
@@ -496,7 +529,7 @@ void Carro(void* pvParameters) {
 
 		//Espera chegar no cruzamento
 		vTaskDelay(pdMS_TO_TICKS((distancia / velocidade) * 3600 * 500));
-		printf("O carro %d chegou no cruzamento %d!\n", id, cruzamentoAtual);
+		printf("O carro %d chegou no cruzamento %c!\n", id, mostraCruzamento(cruzamentoAtual));
 
 		//Esperar semáforo com base no sentido
 		if (sentidoAtual == 0 || sentidoAtual == 2) {//Direção NS e SN
@@ -521,7 +554,7 @@ void Carro(void* pvParameters) {
 				xSemaphoreGive(xSemaforos[cruzamentoAtual][2]);
 				break;
 			case 2://Frente
-				printf("O carro %d quer seguir em fente\n", id);
+				printf("O carro %d quer seguir em frente\n", id);
 				xSemaphoreTake(xSemaforos[cruzamentoAtual][0], portMAX_DELAY);
 
 				xSemaphoreTake(xAcessoCruz[cruzamentoAtual], portMAX_DELAY);
@@ -555,7 +588,7 @@ void Carro(void* pvParameters) {
 				xSemaphoreGive(xSemaforos[cruzamentoAtual][3]);
 				break;
 			case 2://Frente
-				printf("O carro %d quer seguir em fente\n", id);
+				printf("O carro %d quer seguir em frente\n", id);
 				xSemaphoreTake(xSemaforos[cruzamentoAtual][1], portMAX_DELAY);
 
 				xSemaphoreTake(xAcessoCruz[cruzamentoAtual], portMAX_DELAY);
@@ -618,11 +651,11 @@ void Carro(void* pvParameters) {
 			switch (cruzamentoAtual) {
 			case 0:
 				cruzamentoAtual = 2; // C
-				OcupacaodaVia[3]++;
+				FluxoVia[3]++;
 				break;
 			case 1:
 				cruzamentoAtual = 3; // D
-				OcupacaodaVia[5]++;
+				FluxoVia[5]++;
 				break;
 			default:
 				cruzamentoAtual = cruzamentoAtual;
@@ -633,11 +666,11 @@ void Carro(void* pvParameters) {
 			switch (cruzamentoAtual) {
 			case 1:
 				cruzamentoAtual = 0; // A
-				OcupacaodaVia[0]++;
+				FluxoVia[0]++;
 				break;
 			case 3:
 				cruzamentoAtual = 2; // C
-				OcupacaodaVia[6]++;
+				FluxoVia[6]++;
 				break;
 			default:
 				cruzamentoAtual = cruzamentoAtual;
@@ -648,11 +681,11 @@ void Carro(void* pvParameters) {
 			switch (cruzamentoAtual) {
 			case 2:
 				cruzamentoAtual = 0; // A
-				OcupacaodaVia[7]++;
+				FluxoVia[7]++;
 				break;
 			case 3:
 				cruzamentoAtual = 1; // B
-				OcupacaodaVia[1]++;
+				FluxoVia[1]++;
 				break;
 			default:
 				cruzamentoAtual = cruzamentoAtual;
@@ -663,11 +696,11 @@ void Carro(void* pvParameters) {
 			switch (cruzamentoAtual) {
 			case 0:
 				cruzamentoAtual = 1; // B
-				OcupacaodaVia[4]++;
+				FluxoVia[4]++;
 				break;
 			case 2:
 				cruzamentoAtual = 3; // D
-				OcupacaodaVia[2]++;
+				FluxoVia[2]++;
 				break;
 			default:
 				cruzamentoAtual = cruzamentoAtual;
@@ -682,12 +715,13 @@ void Carro(void* pvParameters) {
 	vTaskDelete(NULL);
 }
 
+// Cria carros indefinidamente
 void criarCarros() {
 	xTaskHandle Car = NULL;
 	int i = 0;
 
 	while (1) {
-		vTaskDelay(pdMS_TO_TICKS(geraAleatorio(4000, 8000)));
+		vTaskDelay(pdMS_TO_TICKS(geraAleatorio(CHEGADA_MIN, CHEGADA_MAX)));
 		xTaskCreate(Carro, (signed char*)"criarCarros", configMINIMAL_STACK_SIZE, (void*)i, 1, &Car);
 		i++;
 	}
@@ -703,11 +737,13 @@ int main(void)
 	See http://www.FreeRTOS.org/trace for more information. */
 	vTraceEnable(TRC_START);
 	
-	BoasVindas();
 
 	int i, j;
 
-	//Inicializa o mutex
+	//Comente se não quizer apreciar nosso trabalho
+	BoasVindas();
+
+	//Inicializa o mutex dos estados
 	xAcessoEstado = xSemaphoreCreateMutex();
 	xSemaphoreGive(xAcessoEstado);
 
@@ -717,22 +753,24 @@ int main(void)
 		xSemaphoreGive(xAcessoCruz[j]);
 	}
 
-	//Inicializa os semaforos binários do cruzamento
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
+	//Inicializa os semaforos binários de cada cruzamento
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
 			xSemaforos[i][j] = xSemaphoreCreateBinary();
 		}
 	}
 
+	//Crias os Handles das tasks
 	xTaskHandle Cruz_A, Cruz_B, Cruz_C, Cruz_D;
-	xTaskHandle ComGeral, Car;
-	//
-	xTaskCreate(ComandoGeral, (signed char*)"Comando_Geral", configMINIMAL_STACK_SIZE, (void*)NULL, 4, &ComGeral);
-	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_A", configMINIMAL_STACK_SIZE, (void*)0, 5, &Cruz_A);
-	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_B", configMINIMAL_STACK_SIZE, (void*)1, 5, &Cruz_B);
-	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_C", configMINIMAL_STACK_SIZE, (void*)2, 5, &Cruz_C);
-	xTaskCreate(Cruzamento, (signed char*)"Cruzamento_D", configMINIMAL_STACK_SIZE, (void*)3, 5, &Cruz_D);
-	xTaskCreate(criarCarros, (signed char*)"criarCarros", configMINIMAL_STACK_SIZE, (void*)NULL, 1, &Car);
+	xTaskHandle MonGeral, CriaCar;
+	
+	// Cria as Tasks
+	xTaskCreate(MonitoramentoGeral, (signed char*)"Monitoramento_Geral", configMINIMAL_STACK_SIZE, (void*)NULL, 4, &MonGeral);
+	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_A",        configMINIMAL_STACK_SIZE, (void*)0,    5, &Cruz_A  );
+	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_B",        configMINIMAL_STACK_SIZE, (void*)1,    5, &Cruz_B  );
+	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_C",		 configMINIMAL_STACK_SIZE, (void*)2,    5, &Cruz_C  );
+	xTaskCreate(Cruzamento,         (signed char*)"Cruzamento_D",        configMINIMAL_STACK_SIZE, (void*)3,    5, &Cruz_D  );
+	xTaskCreate(criarCarros,        (signed char*)"Criar_Carros",        configMINIMAL_STACK_SIZE, (void*)NULL, 1, &CriaCar );
 
 	vTaskStartScheduler();
 	for (;;);
